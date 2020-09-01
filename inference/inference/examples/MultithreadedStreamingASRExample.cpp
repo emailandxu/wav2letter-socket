@@ -63,7 +63,7 @@
 using namespace w2l;
 using namespace w2l::streaming;
 
-DEFINE_int32(max_num_threads, 1, "maximum number of threads to use for ASR.");
+DEFINE_int32(max_num_threads, 40, "maximum number of threads to use for ASR.");
 DEFINE_string(
     input_files_base_path,
     ".",
@@ -256,46 +256,60 @@ int main(int argc, char* argv[]) {
 
   {
     TimeElapsedReporter feturesLoadingElapsed(
-        "converting audio input files to text");
+        "converting audio input socket stream to text");
+
     std::cout << "Creating thread pool with " << FLAGS_max_num_threads
               << " threads.\n";
+
     w2l::streaming::example::ThreadPool pool(FLAGS_max_num_threads);
 
-    std::atomic<int> processedFilesCount = {};
-    processedFilesCount = 0;
+    std::atomic<int> processedCount = {};
+    processedCount = 0;
 
-    for (const std::string& inputFile : inputFiles) {
-      const std::string inputFilePath = GetInputFileFullPath(inputFile);
-      const std::string outputFilePath = GetOutputFileFullPath(inputFile);
+    io_service ios;
+    ip::tcp::endpoint endpoint(ip::tcp::v4(), 80);
+    ip::tcp::acceptor acceptor(ios, endpoint);
 
-      std::cout << "Enqueue input file=" << inputFile << " to thread pool.\n";
-      pool.enqueue(
-          [inputFilePath,
-           outputFilePath,
-           dnnModule,
-           decoderFactory,
-           &decoderOptions,
-           nTokens,
-           &processedFilesCount,
-           inputFileCount]() -> void {
-            const int prossesingFileNumber = ++processedFilesCount;
+    for (;;)
+    {
+      std::cout << "wait for client!"<<std::endl;
+      ip::tcp::iostream *stream = new ip::tcp::iostream;
 
-            std::stringstream stringBuffer;
-            stringBuffer << "audioFileToWordsFile() processing "
-                         << prossesingFileNumber << "/" << inputFileCount
-                         << " input=" << inputFilePath
-                         << " output=" << outputFilePath << std::endl;
-            std::cout << stringBuffer.str();
+      std::cout<<&stream<<std::endl;
+      std::cout<<stream<<std::endl;
 
-            audioFileToWordsFile(
-                inputFilePath,
-                outputFilePath,
-                dnnModule,
-                decoderFactory,
-                decoderOptions,
-                nTokens,
-                std::cerr);
-          });
+      acceptor.accept(*(*stream).rdbuf());
+      pool.enqueue([
+         stream,
+         dnnModule,
+         decoderFactory,
+         &decoderOptions,
+         nTokens,
+         &processedCount,
+         inputFileCount]() -> void {
+
+            const int prossesingNumber = ++processedCount;
+            std::cout << "client "<< prossesingNumber <<" connected!" << std::endl;
+            std::cout<<&stream<<std::endl;
+            std::cout<<stream<<std::endl;
+
+            audioStreamToWordsStream(
+            *stream,
+            *stream,
+            dnnModule,
+            decoderFactory,
+            decoderOptions,
+            nTokens);
+
+            if (!*stream)
+            {
+              std::cout << "Error: " << stream->error().message() << "\n";
+            }
+
+            delete stream;
+              std::cout<<"client quit!"<<std::endl;
+      });
+      
     }
   }
 }

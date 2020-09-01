@@ -53,6 +53,7 @@ target_link_libraries(
 
 function(build_example TARGET SRCFILE)
   message(STATUS "Examples: add executable ${TARGET}")
+  find_package(Boost 1.74.0 COMPONENTS system)
   add_executable(${TARGET}
     ${SRCFILE}
   )
@@ -70,6 +71,7 @@ function(build_example TARGET SRCFILE)
       streaming_inference_modules_feature
       audio_to_words_example
       ${GFLAGS_LIBRARIES}
+      ${Boost_LIBRARIES}
   )
 endfunction(build_example)
 
