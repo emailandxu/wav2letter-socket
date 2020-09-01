@@ -16,6 +16,18 @@ RUN cd /root && git clone --recursive https://github.com/facebookresearch/flashl
     cd /root/flashlight && git checkout v0.2 && mkdir -p build && \
     cd build && cmake .. -DCMAKE_BUILD_TYPE=Release -DFLASHLIGHT_BACKEND=CUDA && \
     make -j$(nproc) && make install && \
+
+# ===================================================================
+# Boost library
+# -------------------------------------------------------------------
+cd /root && \
+wget https://dl.bintray.com/boostorg/release/1.74.0/source/boost_1_74_0.tar.gz && \
+tar -xvzf boost_1_74_0.tar.gz && \
+cd boost_1_74_0 && \
+./bootstrap.sh --with-libraries=all --with-toolset=gcc && \
+./b2 toolset=gcc && \
+./b2 install --prefix=/usr && \
+ldconfig && \
 # ==================================================================
 # wav2letter with GPU backend
 # ------------------------------------------------------------------
@@ -23,14 +35,3 @@ RUN cd /root && git clone --recursive https://github.com/facebookresearch/flashl
     cd /root/wav2letter && mkdir -p build && \
     cd build && cmake .. -DCMAKE_BUILD_TYPE=Release -DW2L_LIBRARIES_USE_CUDA=ON -DW2L_BUILD_INFERENCE=ON && \
     make -j$(nproc) 
-# ===================================================================
-# Boost library
-# -------------------------------------------------------------------
-cd /root
-wget https://dl.bintray.com/boostorg/release/1.74.0/source/boost_1_74_0.tar.gz
-tar -xvzf boost_1_74_0.tar.gz
-cd boost_1_74_0
-./bootstrap.sh --with-libraries=all --with-toolset=gcc
-./b2 toolset=gcc
-./b2 install --prefix=/usr
-ldconfig
