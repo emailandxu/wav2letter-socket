@@ -59,6 +59,9 @@
 #include "inference/module/feature/feature.h"
 #include "inference/module/module.h"
 #include "inference/module/nn/nn.h"
+#include <boost/asio.hpp>
+
+using namespace boost::asio;
 
 using namespace w2l;
 using namespace w2l::streaming;
