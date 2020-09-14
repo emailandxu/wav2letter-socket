@@ -35,3 +35,12 @@ ldconfig && \
     cd /root/wav2letter && mkdir -p build && \
     cd build && cmake .. -DCMAKE_BUILD_TYPE=Release -DW2L_LIBRARIES_USE_CUDA=ON -DW2L_BUILD_INFERENCE=ON && \
     make -j$(nproc) 
+# ==================================================================
+# build streaming_tds_model_converter
+# ------------------------------------------------------------------
+export KENLM_ROOT_DIR=/root/kenlm && \
+cd /root/ && \
+cp -rf wav2letter/inference wav2letter/src/ && \
+mkdir wav2letter/build_tools_test && cd wav2letter/build_tools_test && \
+cmake .. -DCMAKE_BUILD_TYPE=Release -DW2L_LIBRARIES_USE_CUDA=OFF -DW2L_BUILD_INFERENCE=ON -DW2L_BUILD_TOOLS=ON && \
+make streaming_tds_model_converter
